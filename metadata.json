@@ -1,0 +1,6 @@
+{
+  "name": "Idle Nameki",
+  "description": "MMORPG Idle 2D de artes marciais em pixel art com combate automático, progresso AFK validado no servidor, 12 mapas, transformações de Ki, chefes e multiplayer em tempo real.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

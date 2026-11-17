@@ -1,0 +1,138 @@
+export interface CombatSkillDef {
+  id: string;
+  slot: number; // 1..8
+  name: string;
+  shortName: string;
+  requiredLevel: number;
+  kiCost: number;
+  cooldownSec: number;
+  damageMultiplier: number; // relative to player attack
+  aoeRadiusTiles: number; // 0 = single target projectile/beam
+  kind: 'projectile' | 'beam' | 'aoe' | 'heal' | 'buff';
+  colorPrimary: string;
+  colorSecondary: string;
+  description: string;
+}
+
+export const COMBAT_SKILLS: CombatSkillDef[] = [
+  {
+    id: 'ki_blast',
+    slot: 1,
+    name: 'Rajada de Ki',
+    shortName: 'Rajada',
+    requiredLevel: 1,
+    kiCost: 8,
+    cooldownSec: 1.5,
+    damageMultiplier: 1.6,
+    aoeRadiusTiles: 0,
+    kind: 'projectile',
+    colorPrimary: '#38bdf8',
+    colorSecondary: '#e0f2fe',
+    description: 'Dispara uma esfera rápida de Ki contra o alvo selecionado.',
+  },
+  {
+    id: 'masenko',
+    slot: 2,
+    name: 'Masenko',
+    shortName: 'Masenko',
+    requiredLevel: 3,
+    kiCost: 24,
+    cooldownSec: 3.5,
+    damageMultiplier: 2.6,
+    aoeRadiusTiles: 0,
+    kind: 'beam',
+    colorPrimary: '#facc15',
+    colorSecondary: '#fef08a',
+    description: 'Onda dourada de energia concentrada com alto impacto.',
+  },
+  {
+    id: 'makankosappo',
+    slot: 3,
+    name: 'Makankosappo',
+    shortName: 'Makanko',
+    requiredLevel: 7,
+    kiCost: 48,
+    cooldownSec: 5.5,
+    damageMultiplier: 3.8,
+    aoeRadiusTiles: 0,
+    kind: 'beam',
+    colorPrimary: '#a855f7',
+    colorSecondary: '#facc15',
+    description: 'Raio espiral perfurante característico dos guerreiros Namekuseijins.',
+  },
+  {
+    id: 'kamehameha',
+    slot: 4,
+    name: 'Kamehameha',
+    shortName: 'Kameha',
+    requiredLevel: 12,
+    kiCost: 75,
+    cooldownSec: 7.5,
+    damageMultiplier: 4.8,
+    aoeRadiusTiles: 1.5,
+    kind: 'beam',
+    colorPrimary: '#0ea5e9',
+    colorSecondary: '#ffffff',
+    description: 'Feixe clássico de energia azul que explode ao atingir o inimigo.',
+  },
+  {
+    id: 'explosive_wave',
+    slot: 5,
+    name: 'Onda Explosiva',
+    shortName: 'Explosão',
+    requiredLevel: 18,
+    kiCost: 110,
+    cooldownSec: 9.0,
+    damageMultiplier: 3.2,
+    aoeRadiusTiles: 4.5,
+    kind: 'aoe',
+    colorPrimary: '#f97316',
+    colorSecondary: '#fde047',
+    description: 'Libera uma onda de choque ao redor do personagem atingindo todos os monstros próximos.',
+  },
+  {
+    id: 'namek_regen',
+    slot: 6,
+    name: 'Regeneração Namek',
+    shortName: 'Cura',
+    requiredLevel: 1,
+    kiCost: 30,
+    cooldownSec: 10.0,
+    damageMultiplier: 0,
+    aoeRadiusTiles: 0,
+    kind: 'heal',
+    colorPrimary: '#22c55e',
+    colorSecondary: '#bbf7d0',
+    description: 'Restaura 40% do HP máximo usando energia espiritual.',
+  },
+  {
+    id: 'ki_charge',
+    slot: 7,
+    name: 'Concentrar Ki',
+    shortName: 'Carga Ki',
+    requiredLevel: 4,
+    kiCost: 0,
+    cooldownSec: 12.0,
+    damageMultiplier: 0,
+    aoeRadiusTiles: 0,
+    kind: 'buff',
+    colorPrimary: '#38bdf8',
+    colorSecondary: '#facc15',
+    description: 'Recupera Ki rapidamente e aumenta o fluxo espiritual em combate.',
+  },
+  {
+    id: 'genki_dama',
+    slot: 8,
+    name: 'Genki Dama',
+    shortName: 'Genki',
+    requiredLevel: 30,
+    kiCost: 240,
+    cooldownSec: 16.0,
+    damageMultiplier: 7.5,
+    aoeRadiusTiles: 5.5,
+    kind: 'aoe',
+    colorPrimary: '#60a5fa',
+    colorSecondary: '#ffffff',
+    description: 'Técnica suprema de área que devasta todos os inimigos ao redor.',
+  },
+];

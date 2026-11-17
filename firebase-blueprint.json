@@ -1,0 +1,426 @@
+{
+  "entities": {
+    "PlayerSave": {
+      "title": "PlayerSave",
+      "description": "Complete private character save state, inventory, equipment, missions, and progression systems for Idle Nameki.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the player."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 24,
+          "description": "Character display name."
+        },
+        "race": {
+          "type": "string",
+          "enum": ["namekian", "saiyan", "earthling", "frieza_clan", "android"],
+          "description": "Character race aesthetic."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Currently active unlocked title."
+        },
+        "level": { "type": "number", "description": "Character level." },
+        "xp": { "type": "number", "description": "Current XP toward next level." },
+        "zeni": { "type": "number", "description": "Current Zeni currency." },
+        "currentHp": { "type": "number", "description": "Current HP." },
+        "currentKi": { "type": "number", "description": "Current accumulated Ki." },
+        "bonusStrength": { "type": "number" },
+        "bonusDefense": { "type": "number" },
+        "bonusSpeed": { "type": "number" },
+        "bonusKi": { "type": "number" },
+        "bonusStamina": { "type": "number" },
+        "currentMapId": { "type": "string", "maxLength": 64 },
+        "activityMode": { "type": "string", "enum": ["combat", "training"] },
+        "trainingStat": { "type": "string", "enum": ["strength", "ki", "defense", "speed", "stamina"] },
+        "transformationId": { "type": "string", "maxLength": 64 },
+        "unlockedTransformations": { "type": "array" },
+        "inventory": { "type": "array" },
+        "equipped": { "type": "object" },
+        "missionProgress": { "type": "object" },
+        "claimedMissions": { "type": "array" },
+        "dailyMissionDate": { "type": "string", "maxLength": 16 },
+        "bossCooldowns": { "type": "object" },
+        "chestCooldowns": { "type": "object", "description": "Per-chest 10-minute reopen timestamps." },
+        "stats": { "type": "object" },
+        "unlockedTitles": { "type": "array" },
+        "partyId": { "type": "string", "maxLength": 128 },
+        "redeemedCodes": { "type": "array", "description": "Secret or promotional codes redeemed by the player." },
+        "dragonBalls": { "type": "array", "description": "Collected Dragon Balls (1..7)." },
+        "xpBuffUntilMs": { "type": "number", "description": "Shenlong 2x XP wish expiry timestamp." },
+        "kiFragments": { "type": "number", "description": "Forge upgrade currency from dismantled items." },
+        "unlockedPets": { "type": "array", "description": "Unlocked companion pet IDs." },
+        "activePetId": { "type": "string", "maxLength": 64 },
+        "petXp": { "type": "number" },
+        "prestigeLevel": { "type": "number" },
+        "divinePoints": { "type": "number" },
+        "divineUpgrades": { "type": "object" },
+        "tournamentPoints": { "type": "number" },
+        "tournamentWins": { "type": "number" },
+        "guildId": { "type": "string", "maxLength": 128 },
+        "guildTag": { "type": "string", "maxLength": 8 },
+        "fusionUntilMs": { "type": "number" },
+        "fusionPartnerName": { "type": "string", "maxLength": 24 },
+        "fusionBonusPower": { "type": "number" },
+        "afkSessionToken": { "type": "string", "maxLength": 2048 },
+        "lastActiveServerMs": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "uid",
+        "name",
+        "race",
+        "title",
+        "level",
+        "xp",
+        "zeni",
+        "currentHp",
+        "currentKi",
+        "bonusStrength",
+        "bonusDefense",
+        "bonusSpeed",
+        "bonusKi",
+        "bonusStamina",
+        "currentMapId",
+        "activityMode",
+        "trainingStat",
+        "transformationId",
+        "unlockedTransformations",
+        "inventory",
+        "equipped",
+        "missionProgress",
+        "claimedMissions",
+        "dailyMissionDate",
+        "bossCooldowns",
+        "stats",
+        "unlockedTitles",
+        "afkSessionToken",
+        "lastActiveServerMs",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PublicProfile": {
+      "title": "PublicProfile",
+      "description": "Publicly visible warrior profile for leaderboards, tournament opponents, and inspection without PII.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "isPublic": { "type": "boolean" },
+        "name": { "type": "string", "minLength": 2, "maxLength": 24 },
+        "race": { "type": "string", "enum": ["namekian", "saiyan", "earthling", "frieza_clan", "android"] },
+        "title": { "type": "string", "maxLength": 64 },
+        "level": { "type": "number" },
+        "powerLevel": { "type": "number" },
+        "maxKi": { "type": "number" },
+        "monstersDefeated": { "type": "number" },
+        "bossesDefeated": { "type": "number" },
+        "trainingSeconds": { "type": "number" },
+        "currentMapId": { "type": "string", "maxLength": 64 },
+        "transformationId": { "type": "string", "maxLength": 64 },
+        "partyId": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "uid",
+        "isPublic",
+        "name",
+        "race",
+        "title",
+        "level",
+        "powerLevel",
+        "maxKi",
+        "monstersDefeated",
+        "bossesDefeated",
+        "trainingSeconds",
+        "currentMapId",
+        "transformationId",
+        "updatedAt"
+      ]
+    },
+    "Party": {
+      "title": "Party",
+      "description": "Multiplayer hunting party for cooperative XP bonuses and Fusion.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 2, "maxLength": 32 },
+        "leaderUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "leaderName": { "type": "string", "minLength": 2, "maxLength": 24 },
+        "mapId": { "type": "string", "maxLength": 64 },
+        "isOpen": { "type": "boolean" },
+        "memberCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "leaderUid", "leaderName", "mapId", "isOpen", "memberCount", "createdAt", "updatedAt"]
+    },
+    "PartyMember": {
+      "title": "PartyMember",
+      "description": "Member entry inside a party subcollection.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 2, "maxLength": 24 },
+        "level": { "type": "number" },
+        "powerLevel": { "type": "number" },
+        "transformationId": { "type": "string", "maxLength": 64 },
+        "joinedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "level", "powerLevel", "transformationId", "joinedAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Global multiplayer chat message.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "senderName": { "type": "string", "minLength": 2, "maxLength": 24 },
+        "senderTitle": { "type": "string", "maxLength": 64 },
+        "senderLevel": { "type": "number" },
+        "channel": { "type": "string", "enum": ["global"] },
+        "text": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "senderName", "senderTitle", "senderLevel", "channel", "text", "createdAt"]
+    },
+    "AfkHistoryRecord": {
+      "title": "AfkHistoryRecord",
+      "description": "Server-validated offline AFK reward claim log.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "mapId": { "type": "string", "maxLength": 64 },
+        "offlineSeconds": { "type": "number" },
+        "xpGained": { "type": "number" },
+        "zeniGained": { "type": "number" },
+        "monstersKilled": { "type": "number" },
+        "itemsFoundCount": { "type": "number" },
+        "rareItemsFoundCount": { "type": "number" },
+        "levelsGained": { "type": "number" },
+        "claimedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "uid",
+        "mapId",
+        "offlineSeconds",
+        "xpGained",
+        "zeniGained",
+        "monstersKilled",
+        "itemsFoundCount",
+        "rareItemsFoundCount",
+        "levelsGained",
+        "claimedAt"
+      ]
+    },
+    "WorldPresence": {
+      "title": "WorldPresence",
+      "description": "Real-time cross-instance player coordinates, map, flight, pet, fusion, and guild tag for 2D map multiplayer (zero PII).",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "isOnline": { "type": "boolean" },
+        "name": { "type": "string", "minLength": 2, "maxLength": 24 },
+        "race": { "type": "string", "enum": ["namekian", "saiyan", "earthling", "frieza_clan", "android"] },
+        "title": { "type": "string", "maxLength": 64 },
+        "level": { "type": "number" },
+        "powerLevel": { "type": "number" },
+        "currentMapId": { "type": "string", "maxLength": 64 },
+        "transformationId": { "type": "string", "maxLength": 64 },
+        "partyId": { "type": "string", "maxLength": 128 },
+        "guildTag": { "type": "string", "maxLength": 8 },
+        "petId": { "type": "string", "maxLength": 64 },
+        "isFused": { "type": "boolean" },
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "facing": { "type": "string", "enum": ["down", "up", "left", "right"] },
+        "moving": { "type": "boolean" },
+        "isFlying": { "type": "boolean" },
+        "activityMode": { "type": "string", "enum": ["combat", "training"] },
+        "emoteText": { "type": "string", "maxLength": 48 },
+        "emoteAtMs": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "uid",
+        "isOnline",
+        "name",
+        "race",
+        "title",
+        "level",
+        "powerLevel",
+        "currentMapId",
+        "transformationId",
+        "partyId",
+        "x",
+        "y",
+        "facing",
+        "moving",
+        "isFlying",
+        "activityMode",
+        "emoteText",
+        "emoteAtMs",
+        "updatedAt"
+      ]
+    },
+    "GameConfig": {
+      "title": "GameConfig",
+      "description": "Global admin-controlled game configuration (beta status, ADM list, content creators list).",
+      "type": "object",
+      "properties": {
+        "betaActive": { "type": "boolean" },
+        "adminNames": { "type": "array" },
+        "adminUids": { "type": "array" },
+        "creatorNames": { "type": "array" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["betaActive", "adminNames", "adminUids", "creatorNames", "updatedAt"]
+    },
+    "Guild": {
+      "title": "Guild",
+      "description": "Player clan/guild with collective XP & DPS buffs and treasury leveling.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 2, "maxLength": 28 },
+        "tag": { "type": "string", "minLength": 2, "maxLength": 5 },
+        "leaderUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "leaderName": { "type": "string", "minLength": 2, "maxLength": 24 },
+        "description": { "type": "string", "maxLength": 120 },
+        "level": { "type": "number" },
+        "treasuryZeni": { "type": "number" },
+        "isOpen": { "type": "boolean" },
+        "memberCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "tag", "leaderUid", "leaderName", "description", "level", "treasuryZeni", "isOpen", "memberCount", "createdAt", "updatedAt"]
+    },
+    "GuildMember": {
+      "title": "GuildMember",
+      "description": "Member entry inside a guild subcollection.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 2, "maxLength": 24 },
+        "level": { "type": "number" },
+        "powerLevel": { "type": "number" },
+        "donatedZeni": { "type": "number" },
+        "joinedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "level", "powerLevel", "donatedZeni", "joinedAt"]
+    },
+    "GuildChatMessage": {
+      "title": "GuildChatMessage",
+      "description": "Private clan/guild chat message.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "senderName": { "type": "string", "minLength": 2, "maxLength": 24 },
+        "text": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "senderName", "text", "createdAt"]
+    },
+    "MarketListing": {
+      "title": "MarketListing",
+      "description": "Player-to-player global marketplace item listing.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "sellerUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "sellerName": { "type": "string", "minLength": 2, "maxLength": 24 },
+        "item": { "type": "object" },
+        "price": { "type": "number" },
+        "status": { "type": "string", "enum": ["open", "sold"] },
+        "buyerUid": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "soldAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "sellerUid", "sellerName", "item", "price", "status", "createdAt"]
+    },
+    "WorldBossState": {
+      "title": "WorldBossState",
+      "description": "Shared real-time global World Boss invasion state.",
+      "type": "object",
+      "properties": {
+        "bossId": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 48 },
+        "archetype": { "type": "string", "maxLength": 32 },
+        "mapId": { "type": "string", "maxLength": 64 },
+        "colorPrimary": { "type": "string", "maxLength": 16 },
+        "colorSecondary": { "type": "string", "maxLength": 16 },
+        "hp": { "type": "number" },
+        "maxHp": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "defeated"] },
+        "spawnedAtMs": { "type": "number" },
+        "respawnAtMs": { "type": "number" },
+        "topDamagers": { "type": "array" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["bossId", "name", "archetype", "mapId", "colorPrimary", "colorSecondary", "hp", "maxHp", "status", "spawnedAtMs", "respawnAtMs", "topDamagers", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/players/{uid}": {
+      "schema": { "$ref": "#/entities/PlayerSave" },
+      "description": "Private full save document for each player, keyed by Firebase Auth UID."
+    },
+    "/publicProfiles/{uid}": {
+      "schema": { "$ref": "#/entities/PublicProfile" },
+      "description": "Public warrior profile and global leaderboard record, keyed by UID."
+    },
+    "/parties/{partyId}": {
+      "schema": { "$ref": "#/entities/Party" },
+      "description": "Multiplayer group header."
+    },
+    "/parties/{partyId}/members/{memberUid}": {
+      "schema": { "$ref": "#/entities/PartyMember" },
+      "description": "Subcollection of active party members."
+    },
+    "/chatMessages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "Global chat messages."
+    },
+    "/afkHistory/{historyId}": {
+      "schema": { "$ref": "#/entities/AfkHistoryRecord" },
+      "description": "Historical log of claimed offline AFK rewards per player."
+    },
+    "/worldPresence/{uid}": {
+      "schema": { "$ref": "#/entities/WorldPresence" },
+      "description": "Real-time cross-instance multiplayer map presence and coordinates per online player."
+    },
+    "/gameConfig/{configId}": {
+      "schema": { "$ref": "#/entities/GameConfig" },
+      "description": "Global beta flag, ADM list, and Content Creator list managed by game admins."
+    },
+    "/guilds/{guildId}": {
+      "schema": { "$ref": "#/entities/Guild" },
+      "description": "Clan/Guild header documents."
+    },
+    "/guilds/{guildId}/members/{memberUid}": {
+      "schema": { "$ref": "#/entities/GuildMember" },
+      "description": "Members subcollection inside a guild."
+    },
+    "/guilds/{guildId}/chat/{messageId}": {
+      "schema": { "$ref": "#/entities/GuildChatMessage" },
+      "description": "Guild-only real-time chat messages."
+    },
+    "/marketListings/{listingId}": {
+      "schema": { "$ref": "#/entities/MarketListing" },
+      "description": "Global marketplace item listings."
+    },
+    "/worldBosses/{bossId}": {
+      "schema": { "$ref": "#/entities/WorldBossState" },
+      "description": "Global multiplayer World Boss invasion state."
+    }
+  }
+}

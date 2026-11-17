@@ -1,0 +1,640 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Reusable Primitives ---
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // --- Validation Blueprints ---
+    function isValidPlayerSave(data, uid) {
+      return data.keys().hasAll([
+        'uid', 'name', 'race', 'title', 'level', 'xp', 'zeni', 'currentHp', 'currentKi',
+        'bonusStrength', 'bonusDefense', 'bonusSpeed', 'bonusKi', 'bonusStamina',
+        'currentMapId', 'activityMode', 'trainingStat', 'transformationId',
+        'unlockedTransformations', 'inventory', 'equipped', 'missionProgress',
+        'claimedMissions', 'dailyMissionDate', 'bossCooldowns', 'stats',
+        'unlockedTitles', 'partyId', 'afkSessionToken', 'lastActiveServerMs',
+        'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid', 'name', 'race', 'title', 'level', 'xp', 'zeni', 'currentHp', 'currentKi',
+        'bonusStrength', 'bonusDefense', 'bonusSpeed', 'bonusKi', 'bonusStamina',
+        'currentMapId', 'activityMode', 'trainingStat', 'transformationId',
+        'unlockedTransformations', 'inventory', 'equipped', 'missionProgress',
+        'claimedMissions', 'dailyMissionDate', 'bossCooldowns', 'chestCooldowns', 'stats',
+        'unlockedTitles', 'partyId', 'redeemedCodes',
+        'dragonBalls', 'xpBuffUntilMs', 'kiFragments', 'unlockedPets', 'activePetId', 'petXp',
+        'prestigeLevel', 'divinePoints', 'divineUpgrades', 'tournamentPoints', 'tournamentWins',
+        'guildId', 'guildTag', 'fusionUntilMs', 'fusionPartnerName', 'fusionBonusPower',
+        'afkSessionToken', 'lastActiveServerMs', 'createdAt', 'updatedAt'
+      ]) &&
+      data.uid == uid &&
+      isValidId(data.uid) &&
+      data.name is string && data.name.size() >= 2 && data.name.size() <= 24 &&
+      data.race in ['namekian', 'saiyan', 'earthling', 'frieza_clan', 'android'] &&
+      data.title is string && data.title.size() <= 64 &&
+      data.level is number && data.level >= 1 && data.level <= 99999 &&
+      data.xp is number && data.xp >= 0 &&
+      data.zeni is number && data.zeni >= 0 &&
+      data.currentHp is number && data.currentHp >= 0 &&
+      data.currentKi is number && data.currentKi >= 0 &&
+      data.bonusStrength is number && data.bonusStrength >= 0 &&
+      data.bonusDefense is number && data.bonusDefense >= 0 &&
+      data.bonusSpeed is number && data.bonusSpeed >= 0 &&
+      data.bonusKi is number && data.bonusKi >= 0 &&
+      data.bonusStamina is number && data.bonusStamina >= 0 &&
+      data.currentMapId is string && data.currentMapId.size() >= 1 && data.currentMapId.size() <= 64 &&
+      data.activityMode in ['combat', 'training'] &&
+      data.trainingStat in ['strength', 'ki', 'defense', 'speed', 'stamina'] &&
+      data.transformationId is string && data.transformationId.size() >= 1 && data.transformationId.size() <= 64 &&
+      data.unlockedTransformations is list && data.unlockedTransformations.size() >= 1 && data.unlockedTransformations.size() <= 20 && data.unlockedTransformations[0] is string &&
+      data.inventory is list && data.inventory.size() <= 120 && (data.inventory.size() == 0 || data.inventory[0] is map) &&
+      data.equipped is map &&
+      data.missionProgress is map &&
+      data.claimedMissions is list && data.claimedMissions.size() <= 150 && (data.claimedMissions.size() == 0 || data.claimedMissions[0] is string) &&
+      data.dailyMissionDate is string && data.dailyMissionDate.size() <= 16 &&
+      data.bossCooldowns is map &&
+      (!('chestCooldowns' in data) || data.chestCooldowns is map) &&
+      data.stats is map &&
+      data.unlockedTitles is list && data.unlockedTitles.size() >= 1 && data.unlockedTitles.size() <= 60 && data.unlockedTitles[0] is string &&
+      (data.partyId == null || (data.partyId is string && isValidId(data.partyId))) &&
+      (!('redeemedCodes' in data) || (data.redeemedCodes is list && data.redeemedCodes.size() <= 20 && (data.redeemedCodes.size() == 0 || data.redeemedCodes[0] is string))) &&
+      (!('dragonBalls' in data) || (data.dragonBalls is list && data.dragonBalls.size() <= 7 && (data.dragonBalls.size() == 0 || data.dragonBalls[0] is number))) &&
+      (!('xpBuffUntilMs' in data) || (data.xpBuffUntilMs is number && data.xpBuffUntilMs >= 0)) &&
+      (!('kiFragments' in data) || (data.kiFragments is number && data.kiFragments >= 0)) &&
+      (!('unlockedPets' in data) || (data.unlockedPets is list && data.unlockedPets.size() <= 20 && (data.unlockedPets.size() == 0 || data.unlockedPets[0] is string))) &&
+      (!('activePetId' in data) || data.activePetId == null || (data.activePetId is string && data.activePetId.size() <= 64)) &&
+      (!('petXp' in data) || (data.petXp is number && data.petXp >= 0)) &&
+      (!('prestigeLevel' in data) || (data.prestigeLevel is number && data.prestigeLevel >= 0)) &&
+      (!('divinePoints' in data) || (data.divinePoints is number && data.divinePoints >= 0)) &&
+      (!('divineUpgrades' in data) || data.divineUpgrades is map) &&
+      (!('tournamentPoints' in data) || (data.tournamentPoints is number && data.tournamentPoints >= 0)) &&
+      (!('tournamentWins' in data) || (data.tournamentWins is number && data.tournamentWins >= 0)) &&
+      (!('guildId' in data) || data.guildId == null || (data.guildId is string && isValidId(data.guildId))) &&
+      (!('guildTag' in data) || data.guildTag == null || (data.guildTag is string && data.guildTag.size() <= 8)) &&
+      (!('fusionUntilMs' in data) || (data.fusionUntilMs is number && data.fusionUntilMs >= 0)) &&
+      (!('fusionPartnerName' in data) || data.fusionPartnerName == null || (data.fusionPartnerName is string && data.fusionPartnerName.size() <= 24)) &&
+      (!('fusionBonusPower' in data) || (data.fusionBonusPower is number && data.fusionBonusPower >= 0)) &&
+      data.afkSessionToken is string && data.afkSessionToken.size() <= 2048 &&
+      data.lastActiveServerMs is number && data.lastActiveServerMs >= 0 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidPublicProfile(data, uid) {
+      return data.keys().hasAll([
+        'uid', 'isPublic', 'name', 'race', 'title', 'level', 'powerLevel', 'maxKi',
+        'monstersDefeated', 'bossesDefeated', 'trainingSeconds', 'currentMapId',
+        'transformationId', 'partyId', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid', 'isPublic', 'name', 'race', 'title', 'level', 'powerLevel', 'maxKi',
+        'monstersDefeated', 'bossesDefeated', 'trainingSeconds', 'currentMapId',
+        'transformationId', 'partyId', 'updatedAt'
+      ]) &&
+      data.uid == uid &&
+      isValidId(data.uid) &&
+      data.isPublic == true &&
+      data.name is string && data.name.size() >= 2 && data.name.size() <= 24 &&
+      data.race in ['namekian', 'saiyan', 'earthling', 'frieza_clan', 'android'] &&
+      data.title is string && data.title.size() <= 64 &&
+      data.level is number && data.level >= 1 && data.level <= 99999 &&
+      data.powerLevel is number && data.powerLevel >= 0 &&
+      data.maxKi is number && data.maxKi >= 0 &&
+      data.monstersDefeated is number && data.monstersDefeated >= 0 &&
+      data.bossesDefeated is number && data.bossesDefeated >= 0 &&
+      data.trainingSeconds is number && data.trainingSeconds >= 0 &&
+      data.currentMapId is string && data.currentMapId.size() >= 1 && data.currentMapId.size() <= 64 &&
+      data.transformationId is string && data.transformationId.size() >= 1 && data.transformationId.size() <= 64 &&
+      (data.partyId == null || (data.partyId is string && isValidId(data.partyId))) &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidParty(data, partyId) {
+      return data.keys().hasAll([
+        'id', 'name', 'leaderUid', 'leaderName', 'mapId', 'isOpen', 'memberCount', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'name', 'leaderUid', 'leaderName', 'mapId', 'isOpen', 'memberCount', 'createdAt', 'updatedAt'
+      ]) &&
+      data.id == partyId &&
+      isValidId(data.id) &&
+      data.name is string && data.name.size() >= 2 && data.name.size() <= 32 &&
+      isValidId(data.leaderUid) &&
+      data.leaderName is string && data.leaderName.size() >= 2 && data.leaderName.size() <= 24 &&
+      data.mapId is string && data.mapId.size() >= 1 && data.mapId.size() <= 64 &&
+      data.isOpen is bool &&
+      data.memberCount is number && data.memberCount >= 1 && data.memberCount <= 4 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidPartyMember(data, memberUid) {
+      return data.keys().hasAll([
+        'uid', 'name', 'level', 'powerLevel', 'transformationId', 'joinedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid', 'name', 'level', 'powerLevel', 'transformationId', 'joinedAt'
+      ]) &&
+      data.uid == memberUid &&
+      isValidId(data.uid) &&
+      data.name is string && data.name.size() >= 2 && data.name.size() <= 24 &&
+      data.level is number && data.level >= 1 && data.level <= 99999 &&
+      data.powerLevel is number && data.powerLevel >= 0 &&
+      data.transformationId is string && data.transformationId.size() >= 1 && data.transformationId.size() <= 64 &&
+      data.joinedAt is timestamp;
+    }
+
+    function isValidChatMessage(data) {
+      return data.keys().hasAll([
+        'uid', 'senderName', 'senderTitle', 'senderLevel', 'channel', 'text', 'createdAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid', 'senderName', 'senderTitle', 'senderLevel', 'channel', 'text', 'createdAt'
+      ]) &&
+      data.uid == request.auth.uid &&
+      isValidId(data.uid) &&
+      data.senderName is string && data.senderName.size() >= 2 && data.senderName.size() <= 24 &&
+      data.senderTitle is string && data.senderTitle.size() <= 64 &&
+      data.senderLevel is number && data.senderLevel >= 1 &&
+      data.channel == 'global' &&
+      data.text is string && data.text.size() >= 1 && data.text.size() <= 240 &&
+      data.createdAt is timestamp;
+    }
+
+    function isValidAfkHistory(data) {
+      return data.keys().hasAll([
+        'uid', 'mapId', 'offlineSeconds', 'xpGained', 'zeniGained',
+        'monstersKilled', 'itemsFoundCount', 'rareItemsFoundCount', 'levelsGained', 'claimedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid', 'mapId', 'offlineSeconds', 'xpGained', 'zeniGained',
+        'monstersKilled', 'itemsFoundCount', 'rareItemsFoundCount', 'levelsGained', 'claimedAt'
+      ]) &&
+      data.uid == request.auth.uid &&
+      isValidId(data.uid) &&
+      data.mapId is string && data.mapId.size() >= 1 && data.mapId.size() <= 64 &&
+      data.offlineSeconds is number && data.offlineSeconds >= 0 &&
+      data.xpGained is number && data.xpGained >= 0 &&
+      data.zeniGained is number && data.zeniGained >= 0 &&
+      data.monstersKilled is number && data.monstersKilled >= 0 &&
+      data.itemsFoundCount is number && data.itemsFoundCount >= 0 &&
+      data.rareItemsFoundCount is number && data.rareItemsFoundCount >= 0 &&
+      data.levelsGained is number && data.levelsGained >= 0 &&
+      data.claimedAt is timestamp;
+    }
+
+    function isValidWorldPresence(data, uid) {
+      return data.keys().hasAll([
+        'uid', 'isOnline', 'name', 'race', 'title', 'level', 'powerLevel',
+        'currentMapId', 'transformationId', 'partyId', 'x', 'y', 'facing',
+        'moving', 'isFlying', 'activityMode', 'emoteText', 'emoteAtMs', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid', 'isOnline', 'name', 'race', 'title', 'level', 'powerLevel',
+        'currentMapId', 'transformationId', 'partyId', 'guildTag', 'petId', 'isFused',
+        'x', 'y', 'facing', 'moving', 'isFlying', 'activityMode', 'emoteText', 'emoteAtMs', 'updatedAt'
+      ]) &&
+      data.uid == uid &&
+      isValidId(data.uid) &&
+      data.isOnline is bool &&
+      data.name is string && data.name.size() >= 2 && data.name.size() <= 24 &&
+      data.race in ['namekian', 'saiyan', 'earthling', 'frieza_clan', 'android'] &&
+      data.title is string && data.title.size() <= 64 &&
+      data.level is number && data.level >= 1 && data.level <= 99999 &&
+      data.powerLevel is number && data.powerLevel >= 0 &&
+      data.currentMapId is string && data.currentMapId.size() >= 1 && data.currentMapId.size() <= 64 &&
+      data.transformationId is string && data.transformationId.size() >= 1 && data.transformationId.size() <= 64 &&
+      (data.partyId == null || (data.partyId is string && isValidId(data.partyId))) &&
+      (!('guildTag' in data) || data.guildTag == null || (data.guildTag is string && data.guildTag.size() <= 8)) &&
+      (!('petId' in data) || data.petId == null || (data.petId is string && data.petId.size() <= 64)) &&
+      (!('isFused' in data) || data.isFused is bool) &&
+      data.x is number && data.x >= 0 && data.x <= 200 &&
+      data.y is number && data.y >= 0 && data.y <= 200 &&
+      data.facing in ['down', 'up', 'left', 'right'] &&
+      data.moving is bool &&
+      data.isFlying is bool &&
+      data.activityMode in ['combat', 'training'] &&
+      data.emoteText is string && data.emoteText.size() <= 48 &&
+      data.emoteAtMs is number && data.emoteAtMs >= 0 &&
+      data.updatedAt is timestamp;
+    }
+
+    function isRootAdmin() {
+      return isVerified() && (
+        request.auth.token.email in ['bryandinniz7@gmail.com', 'bryan8889hh@gmail.com'] ||
+        request.auth.uid in ['6BYsNNHc96Qsh6wRRwlYq11Tnu73', 'rIda6djPp8TYz1KRmqA7woVAbQu2']
+      );
+    }
+
+    function isValidGameConfig(data) {
+      return data.keys().hasAll([
+        'betaActive', 'adminNames', 'adminUids', 'creatorNames', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'betaActive', 'adminNames', 'adminUids', 'creatorNames', 'updatedAt'
+      ]) &&
+      data.betaActive is bool &&
+      data.adminNames is list && data.adminNames.size() <= 20 && (data.adminNames.size() == 0 || data.adminNames[0] is string) &&
+      data.adminUids is list && data.adminUids.size() <= 20 && (data.adminUids.size() == 0 || data.adminUids[0] is string) &&
+      data.creatorNames is list && data.creatorNames.size() <= 50 && (data.creatorNames.size() == 0 || data.creatorNames[0] is string) &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidGuild(data, guildId) {
+      return data.keys().hasAll([
+        'id', 'name', 'tag', 'leaderUid', 'leaderName', 'description',
+        'level', 'treasuryZeni', 'isOpen', 'memberCount', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'name', 'tag', 'leaderUid', 'leaderName', 'description',
+        'level', 'treasuryZeni', 'isOpen', 'memberCount', 'createdAt', 'updatedAt'
+      ]) &&
+      data.id == guildId &&
+      isValidId(data.id) &&
+      data.name is string && data.name.size() >= 2 && data.name.size() <= 28 &&
+      data.tag is string && data.tag.size() >= 2 && data.tag.size() <= 5 &&
+      isValidId(data.leaderUid) &&
+      data.leaderName is string && data.leaderName.size() >= 2 && data.leaderName.size() <= 24 &&
+      data.description is string && data.description.size() <= 120 &&
+      data.level is number && data.level >= 1 && data.level <= 50 &&
+      data.treasuryZeni is number && data.treasuryZeni >= 0 &&
+      data.isOpen is bool &&
+      data.memberCount is number && data.memberCount >= 1 && data.memberCount <= 30 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidGuildMember(data, memberUid) {
+      return data.keys().hasAll([
+        'uid', 'name', 'level', 'powerLevel', 'donatedZeni', 'joinedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid', 'name', 'level', 'powerLevel', 'donatedZeni', 'joinedAt'
+      ]) &&
+      data.uid == memberUid &&
+      isValidId(data.uid) &&
+      data.name is string && data.name.size() >= 2 && data.name.size() <= 24 &&
+      data.level is number && data.level >= 1 && data.level <= 99999 &&
+      data.powerLevel is number && data.powerLevel >= 0 &&
+      data.donatedZeni is number && data.donatedZeni >= 0 &&
+      data.joinedAt is timestamp;
+    }
+
+    function isValidGuildChatMessage(data) {
+      return data.keys().hasAll(['uid', 'senderName', 'text', 'createdAt']) &&
+      data.keys().hasOnly(['uid', 'senderName', 'text', 'createdAt']) &&
+      data.uid == request.auth.uid &&
+      isValidId(data.uid) &&
+      data.senderName is string && data.senderName.size() >= 2 && data.senderName.size() <= 24 &&
+      data.text is string && data.text.size() >= 1 && data.text.size() <= 240 &&
+      data.createdAt is timestamp;
+    }
+
+    function isValidMarketListing(data, listingId) {
+      return data.keys().hasAll([
+        'id', 'sellerUid', 'sellerName', 'item', 'price', 'status', 'createdAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'sellerUid', 'sellerName', 'item', 'price', 'status', 'buyerUid', 'createdAt', 'soldAt'
+      ]) &&
+      data.id == listingId &&
+      isValidId(data.id) &&
+      isValidId(data.sellerUid) &&
+      data.sellerName is string && data.sellerName.size() >= 2 && data.sellerName.size() <= 24 &&
+      data.item is map &&
+      data.price is number && data.price >= 1 && data.price <= 999999999 &&
+      data.status in ['open', 'sold'] &&
+      (!('buyerUid' in data) || data.buyerUid == null || (data.buyerUid is string && isValidId(data.buyerUid))) &&
+      data.createdAt is timestamp &&
+      (!('soldAt' in data) || data.soldAt == null || data.soldAt is timestamp);
+    }
+
+    function isValidWorldBoss(data) {
+      return data.keys().hasAll([
+        'bossId', 'name', 'archetype', 'mapId', 'colorPrimary', 'colorSecondary',
+        'hp', 'maxHp', 'status', 'spawnedAtMs', 'respawnAtMs', 'topDamagers', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'bossId', 'name', 'archetype', 'mapId', 'colorPrimary', 'colorSecondary',
+        'hp', 'maxHp', 'status', 'spawnedAtMs', 'respawnAtMs', 'topDamagers', 'updatedAt'
+      ]) &&
+      data.bossId is string && data.bossId.size() >= 1 && data.bossId.size() <= 64 &&
+      data.name is string && data.name.size() >= 2 && data.name.size() <= 48 &&
+      data.archetype is string && data.archetype.size() >= 1 && data.archetype.size() <= 32 &&
+      data.mapId is string && data.mapId.size() >= 1 && data.mapId.size() <= 64 &&
+      data.colorPrimary is string && data.colorPrimary.size() <= 16 &&
+      data.colorSecondary is string && data.colorSecondary.size() <= 16 &&
+      data.hp is number && data.hp >= 0 &&
+      data.maxHp is number && data.maxHp >= 1 &&
+      data.status in ['active', 'defeated'] &&
+      data.spawnedAtMs is number && data.spawnedAtMs >= 0 &&
+      data.respawnAtMs is number && data.respawnAtMs >= 0 &&
+      data.topDamagers is list && data.topDamagers.size() <= 20 && (data.topDamagers.size() == 0 || data.topDamagers[0] is map) &&
+      data.updatedAt is timestamp;
+    }
+
+    // --- Collection Rules ---
+
+    // Private full player save (PII & full state isolated to owner only)
+    match /players/{uid} {
+      allow get: if isValidId(uid) && isOwner(uid);
+      allow list: if isSignedIn() && existing().uid == request.auth.uid;
+      allow create: if isValidId(uid) && isVerified() && isOwner(uid) &&
+        isValidPlayerSave(incoming(), uid) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(uid) && isVerified() && isOwner(uid) &&
+        isValidPlayerSave(incoming(), uid) &&
+        (!('uid' in existing()) || incoming().uid == existing().uid) &&
+        (((!('createdAt' in existing()) || !(existing().createdAt is timestamp)) && incoming().createdAt == request.time) ||
+          ('createdAt' in existing() && existing().createdAt is timestamp && incoming().createdAt == existing().createdAt)) &&
+        incoming().updatedAt == request.time && (
+          (incoming().diff(existing()).addedKeys().hasOnly([
+            'uid', 'name', 'race', 'title', 'level', 'xp', 'zeni', 'currentHp', 'currentKi',
+            'bonusStrength', 'bonusDefense', 'bonusSpeed', 'bonusKi', 'bonusStamina',
+            'currentMapId', 'activityMode', 'trainingStat', 'transformationId',
+            'unlockedTransformations', 'inventory', 'equipped', 'missionProgress',
+            'claimedMissions', 'dailyMissionDate', 'bossCooldowns', 'chestCooldowns', 'stats',
+            'unlockedTitles', 'partyId', 'redeemedCodes',
+            'dragonBalls', 'xpBuffUntilMs', 'kiFragments', 'unlockedPets', 'activePetId', 'petXp',
+            'prestigeLevel', 'divinePoints', 'divineUpgrades', 'tournamentPoints', 'tournamentWins',
+            'guildId', 'guildTag', 'fusionUntilMs', 'fusionPartnerName', 'fusionBonusPower',
+            'afkSessionToken', 'lastActiveServerMs', 'createdAt', 'updatedAt'
+          ]) &&
+          incoming().diff(existing()).changedKeys().hasOnly([
+            'name', 'race', 'title', 'level', 'xp', 'zeni', 'currentHp', 'currentKi',
+            'bonusStrength', 'bonusDefense', 'bonusSpeed', 'bonusKi', 'bonusStamina',
+            'currentMapId', 'activityMode', 'trainingStat', 'transformationId',
+            'unlockedTransformations', 'inventory', 'equipped', 'missionProgress',
+            'claimedMissions', 'dailyMissionDate', 'bossCooldowns', 'chestCooldowns', 'stats',
+            'unlockedTitles', 'partyId', 'redeemedCodes',
+            'dragonBalls', 'xpBuffUntilMs', 'kiFragments', 'unlockedPets', 'activePetId', 'petXp',
+            'prestigeLevel', 'divinePoints', 'divineUpgrades', 'tournamentPoints', 'tournamentWins',
+            'guildId', 'guildTag', 'fusionUntilMs', 'fusionPartnerName', 'fusionBonusPower',
+            'afkSessionToken', 'lastActiveServerMs', 'createdAt', 'updatedAt'
+          ]) &&
+          (!('name' in existing()) || !(existing().name is string) || existing().name.size() < 2 || existing().name.size() > 24 || incoming().name == existing().name) &&
+          (!('race' in existing()) || !(existing().race in ['namekian', 'saiyan', 'earthling', 'frieza_clan', 'android']) || incoming().race == existing().race)) ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'race', 'title', 'updatedAt'])
+        );
+      allow delete: if false;
+    }
+
+    // Public warrior profiles for Global Rankings & Tournament Opponents (zero PII)
+    match /publicProfiles/{uid} {
+      allow get: if isValidId(uid) && isSignedIn() && existing().isPublic == true;
+      allow list: if isSignedIn() && existing().isPublic == true;
+      allow create: if isValidId(uid) && isVerified() && isOwner(uid) &&
+        isValidPublicProfile(incoming(), uid) &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(uid) && isVerified() && isOwner(uid) &&
+        isValidPublicProfile(incoming(), uid) &&
+        incoming().uid == existing().uid &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'race', 'title', 'level', 'powerLevel', 'maxKi',
+          'monstersDefeated', 'bossesDefeated', 'trainingSeconds',
+          'currentMapId', 'transformationId', 'partyId', 'updatedAt'
+        ]);
+      allow delete: if false;
+    }
+
+    // Multiplayer Parties
+    match /parties/{partyId} {
+      allow get: if isValidId(partyId) && isSignedIn();
+      allow list: if isSignedIn() && (existing().isOpen == true || existing().leaderUid == request.auth.uid);
+      allow create: if isValidId(partyId) && isVerified() &&
+        isValidParty(incoming(), partyId) &&
+        incoming().leaderUid == request.auth.uid &&
+        incoming().memberCount == 1 &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(partyId) && isVerified() &&
+        isValidParty(incoming(), partyId) &&
+        incoming().id == existing().id &&
+        incoming().leaderUid == existing().leaderUid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          (existing().leaderUid == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['name', 'mapId', 'isOpen', 'memberCount', 'updatedAt'])) ||
+          (existing().isOpen == true &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['memberCount', 'updatedAt']))
+        );
+      allow delete: if isValidId(partyId) && isVerified() && existing().leaderUid == request.auth.uid;
+
+      match /members/{memberUid} {
+        allow get: if isValidId(partyId) && isValidId(memberUid) && isSignedIn() &&
+          exists(/databases/$(database)/documents/parties/$(partyId));
+        allow list: if isSignedIn() &&
+          exists(/databases/$(database)/documents/parties/$(partyId));
+        allow create: if isValidId(partyId) && isValidId(memberUid) && isVerified() &&
+          isOwner(memberUid) &&
+          isValidPartyMember(incoming(), memberUid) &&
+          exists(/databases/$(database)/documents/parties/$(partyId)) &&
+          incoming().joinedAt == request.time;
+        allow update: if isValidId(partyId) && isValidId(memberUid) && isVerified() &&
+          isOwner(memberUid) &&
+          isValidPartyMember(incoming(), memberUid) &&
+          incoming().uid == existing().uid &&
+          incoming().joinedAt == existing().joinedAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'level', 'powerLevel', 'transformationId']);
+        allow delete: if isValidId(partyId) && isValidId(memberUid) && isVerified() && (
+          isOwner(memberUid) ||
+          get(/databases/$(database)/documents/parties/$(partyId)).data.leaderUid == request.auth.uid
+        );
+      }
+    }
+
+    // Global Chat Messages
+    match /chatMessages/{messageId} {
+      allow get: if isValidId(messageId) && isSignedIn() && existing().channel == 'global';
+      allow list: if isSignedIn() && existing().channel == 'global';
+      allow create: if isValidId(messageId) && isVerified() &&
+        isValidChatMessage(incoming()) &&
+        incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // Server-validated Offline AFK History
+    match /afkHistory/{historyId} {
+      allow get: if isValidId(historyId) && isSignedIn() && existing().uid == request.auth.uid;
+      allow list: if isSignedIn() && existing().uid == request.auth.uid;
+      allow create: if isValidId(historyId) && isVerified() &&
+        isValidAfkHistory(incoming()) &&
+        incoming().claimedAt == request.time;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // Real-time Cross-Instance Map Presence (zero PII)
+    match /worldPresence/{uid} {
+      allow get: if isValidId(uid) && isSignedIn() && (existing().isOnline == true || isOwner(uid));
+      allow list: if isSignedIn() && existing().isOnline == true;
+      allow create: if isValidId(uid) && isVerified() && isOwner(uid) &&
+        isValidWorldPresence(incoming(), uid) &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(uid) && isVerified() && isOwner(uid) &&
+        isValidWorldPresence(incoming(), uid) &&
+        incoming().uid == existing().uid &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'isOnline', 'name', 'race', 'title', 'level', 'powerLevel',
+          'currentMapId', 'transformationId', 'partyId', 'guildTag', 'petId', 'isFused',
+          'x', 'y', 'facing', 'moving', 'isFlying', 'activityMode', 'emoteText', 'emoteAtMs', 'updatedAt'
+        ]);
+      allow delete: if isValidId(uid) && isVerified() && isOwner(uid);
+    }
+
+    // Global Game Config (Beta Flag, ADMs, Content Creators)
+    match /gameConfig/{configId} {
+      allow get: if isValidId(configId) && configId == 'global' && isSignedIn();
+      allow list: if false;
+      allow create: if isValidId(configId) && configId == 'global' && isRootAdmin() &&
+        isValidGameConfig(incoming()) &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(configId) && configId == 'global' &&
+        isValidGameConfig(incoming()) &&
+        (isRootAdmin() || (isVerified() && request.auth.uid in existing().adminUids)) &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'betaActive', 'adminNames', 'adminUids', 'creatorNames', 'updatedAt'
+        ]);
+      allow delete: if false;
+    }
+
+    // Guilds / Clans
+    match /guilds/{guildId} {
+      allow get: if isValidId(guildId) && isSignedIn();
+      allow list: if isSignedIn() && (existing().isOpen == true || existing().leaderUid == request.auth.uid);
+      allow create: if isValidId(guildId) && isVerified() &&
+        isValidGuild(incoming(), guildId) &&
+        incoming().leaderUid == request.auth.uid &&
+        incoming().memberCount == 1 &&
+        incoming().level == 1 &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(guildId) && isVerified() &&
+        isValidGuild(incoming(), guildId) &&
+        incoming().id == existing().id &&
+        incoming().leaderUid == existing().leaderUid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          (existing().leaderUid == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'isOpen', 'level', 'treasuryZeni', 'memberCount', 'updatedAt'])) ||
+          (exists(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid)) &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['level', 'treasuryZeni', 'memberCount', 'updatedAt'])) ||
+          (existing().isOpen == true &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['memberCount', 'updatedAt']))
+        );
+      allow delete: if isValidId(guildId) && isVerified() && existing().leaderUid == request.auth.uid;
+
+      match /members/{memberUid} {
+        allow get: if isValidId(guildId) && isValidId(memberUid) && isSignedIn() &&
+          exists(/databases/$(database)/documents/guilds/$(guildId));
+        allow list: if isSignedIn() &&
+          exists(/databases/$(database)/documents/guilds/$(guildId));
+        allow create: if isValidId(guildId) && isValidId(memberUid) && isVerified() &&
+          isOwner(memberUid) &&
+          isValidGuildMember(incoming(), memberUid) &&
+          exists(/databases/$(database)/documents/guilds/$(guildId)) &&
+          incoming().joinedAt == request.time;
+        allow update: if isValidId(guildId) && isValidId(memberUid) && isVerified() &&
+          isOwner(memberUid) &&
+          isValidGuildMember(incoming(), memberUid) &&
+          incoming().uid == existing().uid &&
+          incoming().joinedAt == existing().joinedAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'level', 'powerLevel', 'donatedZeni']);
+        allow delete: if isValidId(guildId) && isValidId(memberUid) && isVerified() && (
+          isOwner(memberUid) ||
+          get(/databases/$(database)/documents/guilds/$(guildId)).data.leaderUid == request.auth.uid
+        );
+      }
+
+      match /chat/{messageId} {
+        allow get: if isValidId(guildId) && isValidId(messageId) && isSignedIn() &&
+          exists(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid));
+        allow list: if isSignedIn() &&
+          exists(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid));
+        allow create: if isValidId(guildId) && isValidId(messageId) && isVerified() &&
+          exists(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid)) &&
+          isValidGuildChatMessage(incoming()) &&
+          incoming().createdAt == request.time;
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+
+    // Global Marketplace Listings
+    match /marketListings/{listingId} {
+      allow get: if isValidId(listingId) && isSignedIn() &&
+        (existing().status == 'open' || existing().sellerUid == request.auth.uid || existing().buyerUid == request.auth.uid);
+      allow list: if isSignedIn() &&
+        (existing().status == 'open' || existing().sellerUid == request.auth.uid || existing().buyerUid == request.auth.uid);
+      allow create: if isValidId(listingId) && isVerified() &&
+        isValidMarketListing(incoming(), listingId) &&
+        incoming().sellerUid == request.auth.uid &&
+        incoming().status == 'open' &&
+        (!('buyerUid' in incoming()) || incoming().buyerUid == null) &&
+        incoming().createdAt == request.time &&
+        (!('soldAt' in incoming()) || incoming().soldAt == null);
+      allow update: if isValidId(listingId) && isVerified() &&
+        isValidMarketListing(incoming(), listingId) &&
+        existing().status == 'open' &&
+        incoming().status == 'sold' &&
+        incoming().sellerUid == existing().sellerUid &&
+        incoming().sellerUid != request.auth.uid &&
+        incoming().buyerUid == request.auth.uid &&
+        incoming().item == existing().item &&
+        incoming().price == existing().price &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().soldAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'buyerUid', 'soldAt']);
+      allow delete: if isValidId(listingId) && isVerified() && existing().sellerUid == request.auth.uid;
+    }
+
+    // Global World Boss Invasion State
+    match /worldBosses/{bossId} {
+      allow get: if isValidId(bossId) && bossId == 'active' && isSignedIn();
+      allow list: if false;
+      allow create: if isValidId(bossId) && bossId == 'active' && isVerified() &&
+        isValidWorldBoss(incoming()) &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(bossId) && bossId == 'active' && isVerified() &&
+        isValidWorldBoss(incoming()) &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'bossId', 'name', 'archetype', 'mapId', 'colorPrimary', 'colorSecondary',
+          'hp', 'maxHp', 'status', 'spawnedAtMs', 'respawnAtMs', 'topDamagers', 'updatedAt'
+        ]);
+      allow delete: if false;
+    }
+  }
+}
